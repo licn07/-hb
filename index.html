@@ -88,9 +88,34 @@
             font-size: 30px;
             cursor: pointer;
         }
+        /* 新增弹窗样式 */
+        .loading-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            color: white;
+            font-size: 18px;
+            text-align: center;
+            padding: 20px;
+            line-height: 1.6;
+        }
     </style>
 </head>
 <body>
+    <!-- 新增弹窗 -->
+    <div class="loading-popup" id="loadingPopup">
+        <div>请等待5秒加载图片比较好感谢配合</div>
+        <div style="margin-top: 10px; font-size: 16px;">该弹窗5秒后自动消失，稍等</div>
+    </div>
+
     <!-- 新增标题区域 -->
     <div class="header">
         <h1>LiCN收集图片素材来自于网络</h1>
@@ -107,11 +132,17 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            const loadingPopup = document.getElementById('loadingPopup');
             const gallery = document.getElementById('gallery');
             const fullscreenOverlay = document.getElementById('fullscreenOverlay');
             const fullscreenImg = document.getElementById('fullscreenImg');
             const closeBtn = document.getElementById('closeBtn');
             const totalImages = 500; // 图片总数，可根据需要调整
+
+            // 5秒后隐藏弹窗
+            setTimeout(() => {
+                loadingPopup.style.display = 'none';
+            }, 5000);
 
             for (let i = 1; i <= totalImages; i++) {
                 const imgName = `${i}.png`;
