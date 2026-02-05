@@ -3,37 +3,110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LiCN图库</title>
+    <title>图片画廊</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: #f5f5f5;
             padding: 10px;
         }
-
-        /* 顶部标题栏 */
+        /* 新增标题样式 */
         .header {
             text-align: center;
-            padding: 15px 0 5px;
-            font-size: 18px;
-            font-weight: bold;
+            margin-bottom: 20px;
             color: #333;
         }
-        /* 说明文字样式 */
-        .tips {
-            text-align: center;
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .header p {
             font-size: 14px;
             color: #666;
-            margin-bottom: 10px;
-            line-height: 1.4;
         }
+        .gallery-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+        .image-card {
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: none; /* 默认隐藏，加载成功后显示 */
+            flex-direction: column;
+            align-items: center;
+            padding: 8px;
+        }
+        .image-card.loaded {
+            display: flex;
+        }
+        .image-card img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 4px;
+        }
+        .image-name {
+            margin-top: 6px;
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <!-- 新增标题区域 -->
+    <div class="header">
+        <h1>LiCN收集图片素材来自于网络</h1>
+        <p>都是测试过的</p>
+    </div>
 
+    <div class="gallery-container" id="gallery"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const gallery = document.getElementById('gallery');
+            const totalImages = 500; // 图片总数，可根据需要调整
+
+            for (let i = 1; i <= totalImages; i++) {
+                const imgName = `${i}.png`;
+                const card = document.createElement('div');
+                card.className = 'image-card';
+
+                const img = document.createElement('img');
+                img.src = imgName;
+                img.alt = imgName;
+
+                const nameLabel = document.createElement('div');
+                nameLabel.className = 'image-name';
+                nameLabel.textContent = imgName;
+
+                // 图片加载成功后显示卡片
+                img.onload = () => {
+                    card.classList.add('loaded');
+                };
+
+                // 图片加载失败则保持隐藏（不添加loaded类）
+                img.onerror = () => {
+                    // 可选：在控制台输出加载失败的图片
+                    // console.error(`图片加载失败: ${imgName}`);
+                };
+
+                card.appendChild(img);
+                card.appendChild(nameLabel);
+                gallery.appendChild(card);
+            }
+        });
+    </script>
+</body>
+</html>
         /* 固定为4列网格 */
         .gallery-container {
             display: grid;
