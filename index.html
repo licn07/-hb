@@ -131,20 +131,35 @@
             const fullscreenImg = document.getElementById('fullscreenImg');
             const closeBtn = document.getElementById('closeBtn');
             const totalImages = 500;
-            let currentImageIndex = 1;
+            const BATCH_SIZE = 16; // 一次并发加载16张，这是浏览器的最优并发数
+            let currentBatch = 0;
 
-            // 5秒后隐藏弹窗
+            // 弹窗消失后开始分批次并发加载
             setTimeout(() => {
                 loadingPopup.style.display = 'none';
-                // 弹窗消失后开始按顺序加载图片
-                loadNextImage();
+                loadNextBatch();
             }, 5000);
 
-            // 按顺序加载下一张图片
-            function loadNextImage() {
-                if (currentImageIndex > totalImages) return;
+            // 分批次加载图片
+            function loadNextBatch() {
+                const start = currentBatch * BATCH_SIZE + 1;
+                const end = Math.min(start + BATCH_SIZE - 1, totalImages);
 
-                const imgName = `${currentImageIndex}.png`;
+                // 并发加载当前批次的所有图片
+                for (let i = start; i <= end; i++) {
+                    loadImage(i);
+                }
+
+                currentBatch++;
+                // 如果还有图片没加载完，立即加载下一批
+                if (start < totalImages) {
+                    loadNextBatch();
+                }
+            }
+
+            // 加载单张图片
+            function loadImage(index) {
+                const imgName = `${index}.png`;
                 const card = document.createElement('div');
                 card.className = 'image-card';
 
@@ -156,21 +171,9 @@
                 nameLabel.className = 'image-name';
                 nameLabel.textContent = imgName;
 
-                // 图片加载成功后显示卡片，并加载下一张
-                img.onload = () => {
-                    card.classList.add('loaded');
-                    currentImageIndex++;
-                    // 延迟50ms加载下一张，避免请求过于密集
-                    setTimeout(loadNextImage, 50);
-                };
+                img.onload = () => card.classList.add('loaded');
+                img.onerror = () => {}; // 加载失败直接隐藏
 
-                // 图片加载失败，直接尝试加载下一张
-                img.onerror = () => {
-                    currentImageIndex++;
-                    setTimeout(loadNextImage, 50);
-                };
-
-                // 点击卡片触发全屏查看
                 card.addEventListener('click', () => {
                     fullscreenImg.src = img.src;
                     fullscreenOverlay.classList.add('active');
