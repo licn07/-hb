@@ -11,7 +11,11 @@
         .header h1 { font-size: 24px; color: #333; }
         .header p { font-size: 14px; color: #666; margin: 8px 0; }
         .header .red-tip { font-size: 14px; color: #ff0000; }
-        .gallery { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .gallery { 
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 8px; 
+        }
         .img-card {
             background: rgba(255, 255, 255, 0.7);
             backdrop-filter: blur(8px);
@@ -30,19 +34,19 @@
         }
         .img-card img {
             width: 100%;
+            height: 120px;
             border-radius: 6px;
             margin-bottom: 4px;
             object-fit: cover;
+            display: block;
         }
-        .img-card span { font-size: 12px; color: #333; text-shadow: 0 1px 1px rgba(255,255,255,0.8); }
+        .img-card span { font-size: 12px; color: #333; }
         .popup { 
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
             background: rgba(0,0,0,0.8); backdrop-filter: blur(4px);
             padding: 20px 35px; border-radius: 10px; color: #fff;
             text-align: center; z-index: 999; max-width: 95%;
         }
-        .popup p { margin: 8px 0; font-size: 16px; }
-        .popup small { font-size: 14px; }
         .fullscreen { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.9); backdrop-filter: blur(8px);
@@ -65,19 +69,7 @@
         <div class="red-tip">首次加载较慢见谅因为服务区在国外抱歉</div>
     </div>
 
-    <div class="gallery" id="gallery">
-        <!-- 直接用HTML写死前231张卡片，彻底避免JS加载问题 -->
-        <div class="img-card"><img src="1.png" alt="1.png"><span>1.png</span></div>
-        <div class="img-card"><img src="2.png" alt="2.png"><span>2.png</span></div>
-        <div class="img-card"><img src="3.png" alt="3.png"><span>3.png</span></div>
-        <div class="img-card"><img src="4.png" alt="4.png"><span>4.png</span></div>
-        <div class="img-card"><img src="5.png" alt="5.png"><span>5.png</span></div>
-        <div class="img-card"><img src="6.png" alt="6.png"><span>6.png</span></div>
-        <div class="img-card"><img src="7.png" alt="7.png"><span>7.png</span></div>
-        <div class="img-card"><img src="8.png" alt="8.png"><span>8.png</span></div>
-        <!-- ... 此处省略中间1.png到231.png的HTML代码，你可以用工具批量生成这部分 -->
-        <div class="img-card"><img src="231.png" alt="231.png"><span>231.png</span></div>
-    </div>
+    <div class="gallery" id="gallery"></div>
 
     <div class="fullscreen" id="fullscreen">
         <span class="close" id="close">&times;</span>
@@ -86,23 +78,32 @@
 
     <script>
         const popup = document.getElementById('popup');
+        const gallery = document.getElementById('gallery');
         const fullscreen = document.getElementById('fullscreen');
         const fullImg = document.getElementById('fullImg');
         const closeBtn = document.getElementById('close');
+        const totalImgs = 231; // 你的实际图片总数
+
+        // 立即生成所有图片卡片，不等待弹窗消失
+        for (let i = 1; i <= totalImgs; i++) {
+            const card = document.createElement('div');
+            card.className = 'img-card';
+            card.innerHTML = `
+                <img src="${i}.png" alt="${i}.png" loading="lazy">
+                <span>${i}.png</span>
+            `;
+            // 点击放大
+            card.addEventListener('click', () => {
+                fullImg.src = `${i}.png`;
+                fullscreen.classList.add('show');
+            });
+            gallery.appendChild(card);
+        }
 
         // 5秒后隐藏弹窗
         setTimeout(() => {
             popup.style.display = 'none';
         }, 5000);
-
-        // 点击卡片放大图片
-        document.querySelectorAll('.img-card').forEach(card => {
-            card.addEventListener('click', () => {
-                const img = card.querySelector('img');
-                fullImg.src = img.src;
-                fullscreen.classList.add('show');
-            });
-        });
 
         // 关闭全屏
         closeBtn.onclick = () => fullscreen.classList.remove('show');
