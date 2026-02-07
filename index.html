@@ -65,58 +65,36 @@
             const fullscreenImg = document.getElementById('fullscreenImg');
             const closeBtn = document.getElementById('closeBtn');
             const totalImages = 500;
-            const BATCH_SIZE = 64;
+            // 修复：降低并发数（浏览器默认最大并发是6-8，之前64会被拦截）
+            const BATCH_SIZE = 8;
             let currentBatch = 0;
 
-            // 🔧 重点优化 OPPO 浏览器识别，补充专属 UA 特征
+            // 优化浏览器识别（兼容无特征的UA）
             function detectBrowser() {
                 const userAgent = navigator.userAgent.toLowerCase();
                 const platform = navigator.platform.toLowerCase();
 
-                // 1. 优先识别国产浏览器（重点补充 OPPO 专属特征）
-                if (userAgent.includes('vivo')) {
-                    return 'vivo浏览器';
-                } else if (userAgent.includes('miui') || userAgent.includes('xiaomi')) {
-                    return '小米浏览器';
-                } else if (userAgent.includes('huawei') || userAgent.includes('honor')) {
-                    return '华为浏览器';
-                } else if (
-                    userAgent.includes('oppo') || 
-                    userAgent.includes('aosp/oppo') ||  // OPPO 原生浏览器特征
-                    userAgent.includes('oppobrowser')   // OPPO 浏览器专属标识
-                ) {
-                    return 'OPPO浏览器';
-                } else if (userAgent.includes('meizu')) {
-                    return '魅族浏览器';
-                } else if (userAgent.includes('qqbrowser')) {
-                    return 'QQ浏览器';
-                } else if (userAgent.includes('ucbrowser')) {
-                    return 'UC浏览器';
-                } else if (userAgent.includes('baidu') && userAgent.includes('browser')) {
-                    return '百度浏览器';
-                }
+                // 国产浏览器识别
+                if (userAgent.includes('vivo')) return 'vivo浏览器';
+                if (userAgent.includes('miui') || userAgent.includes('xiaomi')) return '小米浏览器';
+                if (userAgent.includes('huawei') || userAgent.includes('honor')) return '华为浏览器';
+                if (userAgent.includes('oppo') || userAgent.includes('aosp/oppo') || userAgent.includes('oppobrowser')) return 'OPPO浏览器';
+                if (userAgent.includes('meizu')) return '魅族浏览器';
+                if (userAgent.includes('qqbrowser')) return 'QQ浏览器';
+                if (userAgent.includes('ucbrowser')) return 'UC浏览器';
+                if (userAgent.includes('baidu') && userAgent.includes('browser')) return '百度浏览器';
 
-                // 2. 识别主流浏览器
-                if (userAgent.includes('edge') && userAgent.includes('edg')) {
-                    return '微软浏览器（Edge）';
-                } else if (userAgent.includes('chrome') && !userAgent.includes('edge') && !userAgent.includes('safari')) {
-                    return '谷歌浏览器（Chrome）';
-                } else if (userAgent.includes('firefox')) {
-                    return '火狐浏览器（Firefox）';
-                } else if (
-                    userAgent.includes('safari') && 
-                    !userAgent.includes('chrome') && 
-                    !userAgent.includes('edge') && 
-                    !userAgent.includes('qqbrowser') && 
-                    !userAgent.includes('ucbrowser')
-                ) {
-                    return platform.includes('iphone') || platform.includes('ipad') ? '苹果浏览器（Safari-iOS）' : '苹果浏览器（Safari-Mac）';
-                } else if (userAgent.includes('opera')) {
-                    return '欧朋浏览器（Opera）';
+                // 主流浏览器识别
+                if (userAgent.includes('edge') && userAgent.includes('edg')) return '微软浏览器（Edge）';
+                if (userAgent.includes('chrome') && !userAgent.includes('edge')) return '谷歌浏览器（Chrome）';
+                if (userAgent.includes('firefox')) return '火狐浏览器（Firefox）';
+                if (userAgent.includes('safari') && !userAgent.includes('chrome') && !userAgent.includes('edge')) {
+                    return platform.includes('iphone') ? '苹果浏览器（Safari）' : '苹果浏览器（Safari）';
                 }
+                if (userAgent.includes('opera')) return '欧朋浏览器（Opera）';
 
-                // 3. 兜底：如果仍未识别，显示UA关键信息（方便后续调试）
-                return `未知浏览器（UA特征：${userAgent.match(/(oppo|aosp|oppobrowser|vivo|miui)/)?.[0] || '无'}）`;
+                // 无特征UA：直接显示"手机默认浏览器"（适配系统自带无标识的浏览器）
+                return '手机默认浏览器';
             }
 
             // 动态设置弹窗文字
@@ -127,25 +105,20 @@
                 <div style="margin-top: 8px; font-size: 14px;">该弹窗5秒后自动消失，稍等</div>
             `;
 
-            // 立即加载图片
-            loadNextBatch();
-
-            // 5秒后隐藏弹窗
-            setTimeout(() => {
-                loadingPopup.style.display = 'none';
-            }, 5000);
-
+            // 修复：分批加载+间隔延迟（避免请求被拦截）
             function loadNextBatch() {
                 const start = currentBatch * BATCH_SIZE + 1;
                 const end = Math.min(start + BATCH_SIZE - 1, totalImages);
 
+                // 当前批次的图片请求
                 for (let i = start; i <= end; i++) {
                     loadImage(i);
                 }
 
                 currentBatch++;
+                // 延迟100ms加载下一批（给浏览器缓冲时间）
                 if (start < totalImages) {
-                    loadNextBatch();
+                    setTimeout(loadNextBatch, 100);
                 }
             }
 
@@ -163,9 +136,14 @@
                 nameLabel.className = 'image-name';
                 nameLabel.textContent = imgName;
 
-                img.onload = () => card.classList.add('loaded');
+                // 加载成功显示卡片
+                img.onload = () => {
+                    card.classList.add('loaded');
+                };
+                // 加载失败不显示
                 img.onerror = () => {};
 
+                // 全屏查看
                 card.addEventListener('click', () => {
                     fullscreenImg.src = img.src;
                     fullscreenOverlay.classList.add('active');
@@ -176,10 +154,16 @@
                 gallery.appendChild(card);
             }
 
+            // 弹窗消失后开始加载（避免弹窗遮挡时的请求拥堵）
+            setTimeout(() => {
+                loadingPopup.style.display = 'none';
+                loadNextBatch();
+            }, 5000);
+
+            // 关闭全屏
             closeBtn.addEventListener('click', () => {
                 fullscreenOverlay.classList.remove('active');
             });
-
             fullscreenOverlay.addEventListener('click', (e) => {
                 if (e.target === fullscreenOverlay) {
                     fullscreenOverlay.classList.remove('active');
